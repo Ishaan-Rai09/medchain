@@ -54,6 +54,14 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role
       }
 
+      // Ensure token contains an expiry for server-side checks (rotate on sign-in)
+      const now = Math.floor(Date.now() / 1000)
+      const maxAge = 60 * 60 // 1 hour
+      if (!token.exp || (user && token.iat && now - (token.iat as number) > maxAge)) {
+        token.iat = now
+        token.exp = now + maxAge
+      }
+
       return token
     },
     async session({ session, token }) {
@@ -61,11 +69,18 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as AuthRole
       }
 
+      // Attach expiry to session object for client-side UI
+      if (token.exp) {
+        session.expires = new Date((token.exp as number) * 1000).toISOString()
+      }
+
       return session
     },
   },
   session: {
     strategy: "jwt",
+    maxAge: 60 * 60, // 1 hour
+    updateAge: 15 * 60, // 15 minutes
   },
   pages: {
     signIn: "/auth/login",

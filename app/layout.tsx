@@ -4,6 +4,9 @@ import { Inter } from "next/font/google"
 import { Footer } from "@/components/footer"
 import { Toaster } from "sonner"
 import "./globals.css"
+import Providers from "@/components/providers"
+import Header from "@/components/header"
+import SessionGuardWrapper from "@/components/session-guard-wrapper"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
@@ -27,7 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased flex min-h-screen flex-col bg-background text-foreground`}>
-        <div className="flex flex-1 flex-col">{children}</div>
+        <Providers>
+          <Header />
+          <SessionGuardWrapper />
+          <div className="flex flex-1 flex-col">{children}</div>
+        </Providers>
         <Footer />
         <Toaster position="top-center" />
       </body>

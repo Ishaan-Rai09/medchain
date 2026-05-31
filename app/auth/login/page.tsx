@@ -40,6 +40,36 @@ function LoginPageContent() {
     }
 
     toast.success("Signed in successfully")
+
+    // Wait for the session cookie to be set and the session endpoint to
+    // return a user before navigating. This avoids a race where the app
+    // redirects to /dashboard but the server still sees no session and
+    // sends the user back to the login page.
+    const waitForSession = async (attempts = 10, delay = 250) => {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const resp = await fetch('/api/auth/session')
+          if (resp.ok) {
+            const json = await resp.json()
+            if (json?.user) return true
+          }
+        } catch (e) {
+          // ignore and retry
+        }
+        // small delay
+        await new Promise((r) => setTimeout(r, delay))
+      }
+      return false
+    }
+
+    const ready = await waitForSession(12, 250)
+    if (!ready) {
+      // fallback: navigate to callback and refresh
+      router.push(result.url ?? callbackUrl)
+      router.refresh()
+      return
+    }
+
     router.push(result.url ?? callbackUrl)
     router.refresh()
   }
