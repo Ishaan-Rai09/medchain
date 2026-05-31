@@ -1,17 +1,15 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist } from "next/font/google"
-import { SubscriptionProvider } from "@/contexts/subscription-context"
-import { AuthProvider } from "@/contexts/auth-context"
+import { Inter } from "next/font/google"
 import { Footer } from "@/components/footer"
 import { Toaster } from "sonner"
 import "./globals.css"
 
-const geist = Geist({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "8x Hiring Template",
-  description: "A SaaS starter template for frontend engineering assessments.",
+  title: "MedChain",
+  description: "A secure medical supply chain traceability platform for regulators, manufacturers, pharmacies, and consumers.",
   icons: {
     icon: [
       { url: "/favicon-32x32.png" },
@@ -28,15 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geist.className} antialiased flex flex-col min-h-screen`}>
-        <AuthProvider>
-          <SubscriptionProvider>
-            <div className="flex-1 flex flex-col">
-              {children}
-            </div>
-            <Footer />
-          </SubscriptionProvider>
-        </AuthProvider>
+      <body className={`${inter.variable} font-sans antialiased flex min-h-screen flex-col bg-background text-foreground`}>
+        <div className="flex flex-1 flex-col">{children}</div>
+        <Footer />
         <Toaster position="top-center" />
       </body>
     </html>

@@ -45,8 +45,8 @@ export default function PrivacyPage() {
           <section className="mb-8">
             <h2 className="text-3xl font-light tracking-tight mb-4">Data Storage</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              All data is stored locally in your Supabase instance. In this demo environment, data is
-              stored in a local PostgreSQL database running via Docker.
+              All data is stored in your MongoDB Atlas or cloud MongoDB instance. In this demo environment,
+              data is stored in the database configured through your `DATABASE_URL` connection string.
             </p>
           </section>
 

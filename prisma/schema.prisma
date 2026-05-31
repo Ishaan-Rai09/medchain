@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+}
+
+enum UserRole {
+  GOVERNMENT
+  MANUFACTURER
+  PHARMACY
+  CONSUMER
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum DrugStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+enum MedicineUnitStatus {
+  IN_PRODUCTION
+  DISTRIBUTED
+  AT_PHARMACY
+  SOLD_TO_CONSUMER
+  FLAGGED
+}
+
+enum OwnerType {
+  GOVERNMENT
+  MANUFACTURER
+  PHARMACY
+  CONSUMER
+}
+
+enum FlagStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+model User {
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  name               String?
+  email              String           @unique
+  passwordHash       String?
+  role               UserRole
+  orgName            String?
+  licenseId          String?
+  status             AccountStatus    @default(PENDING)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  drugTypes          DrugType[]       @relation("ManufacturerDrugTypes")
+  licenses           License[]        @relation("ManufacturerLicenses")
+  manufacturedUnits  MedicineUnit[]   @relation("ManufacturedUnits")
+  transferLogsFrom   TransferLog[]    @relation("TransferFrom")
+  transferLogsTo     TransferLog[]    @relation("TransferTo")
+  flagsRaised        Flag[]           @relation("FlagsRaised")
+
+  @@index([role, status])
+}
+
+model DrugType {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  genericName    String
+  category       String
+  dosageForm     String
+  strength       String
+  batchSize      Int
+  manufacturerId String     @db.ObjectId
+  status         DrugStatus @default(PENDING)
+  govNotes       String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  manufacturer   User       @relation("ManufacturerDrugTypes", fields: [manufacturerId], references: [id])
+  medicineUnits  MedicineUnit[]
+
+  @@index([manufacturerId, status])
+}
+
+model License {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  licenseNumber   String        @unique
+  manufacturerId  String        @db.ObjectId
+  drugTypeIds     String[]
+  issueDate       DateTime
+  expiryDate      DateTime
+  issuedBy        String
+  status          LicenseStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  manufacturer    User          @relation("ManufacturerLicenses", fields: [manufacturerId], references: [id])
+
+  @@index([manufacturerId, status])
+}
+
+model MedicineUnit {
+  id               String              @id @default(auto()) @map("_id") @db.ObjectId
+  uuid             String              @unique
+  drugTypeId       String              @db.ObjectId
+  batchNumber      String
+  manufacturerId   String              @db.ObjectId
+  manufactureDate  DateTime
+  expiryDate       DateTime
+  currentStatus    MedicineUnitStatus   @default(IN_PRODUCTION)
+  currentOwnerId   String
+  currentOwnerType OwnerType
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  drugType         DrugType            @relation(fields: [drugTypeId], references: [id])
+  manufacturer     User                @relation("ManufacturedUnits", fields: [manufacturerId], references: [id])
+  transferLogs     TransferLog[]
+  flags            Flag[]
+
+  @@index([drugTypeId, currentStatus])
+  @@index([manufacturerId, batchNumber])
+}
+
+model TransferLog {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  unitId          String       @db.ObjectId
+  fromId          String       @db.ObjectId
+  fromType        OwnerType
+  toId            String       @db.ObjectId
+  toType          OwnerType
+  transferDate    DateTime     @default(now())
+  prescriptionRef String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  unit            MedicineUnit @relation(fields: [unitId], references: [id])
+  fromUser        User?        @relation("TransferFrom", fields: [fromId], references: [id])
+  toUser          User?        @relation("TransferTo", fields: [toId], references: [id])
+
+  @@index([unitId, transferDate])
+}
+
+model Flag {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  unitId     String       @db.ObjectId
+  reason     String
+  raisedBy   String       @db.ObjectId
+  resolvedAt DateTime?
+  status     FlagStatus   @default(OPEN)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  unit       MedicineUnit @relation(fields: [unitId], references: [id])
+  raiser     User?        @relation("FlagsRaised", fields: [raisedBy], references: [id])
+
+  @@index([unitId, status])
+}
