@@ -1,4 +1,5 @@
 import { getUsersCollection } from "@/lib/mongo"
+import type { AuthRole } from "@/lib/mongo"
 import { compare } from "bcryptjs"
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -42,10 +43,27 @@ export const authOptions: NextAuthOptions = {
           id: userId,
           email: user.email,
           name: user.name ?? user.orgName ?? user.email,
+          role: user.role,
         }
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user && "role" in user && typeof user.role === "string") {
+        token.role = user.role
+      }
+
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user && typeof token.role === "string") {
+        session.user.role = token.role as AuthRole
+      }
+
+      return session
+    },
+  },
   session: {
     strategy: "jwt",
   },

@@ -9,7 +9,7 @@ const signupSchema = z.object({
   organization: z.string().trim().min(2, "Organization is required"),
   email: z.string().email("A valid email is required").transform((value) => value.toLowerCase()),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["GOVERNMENT", "MANUFACTURER", "PHARMACY", "CONSUMER"]),
+  role: z.enum(["GOVERNMENT", "MANUFACTURER", "PHARMACY"]),
 })
 
 export async function POST(request: Request) {
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
     const passwordHash = await hash(password, 12)
 
     const now = new Date()
+    const initialStatus = role === "GOVERNMENT" ? "ACTIVE" : "PENDING"
 
     await usersCollection.insertOne({
         name: `${firstName} ${lastName}`.trim(),
@@ -44,13 +45,25 @@ export async function POST(request: Request) {
         passwordHash,
         role,
         orgName: organization,
-        status: "ACTIVE",
+      status: initialStatus,
         createdAt: now,
         updatedAt: now,
     })
 
     return NextResponse.json({ message: "Account created successfully" }, { status: 201 })
-  } catch {
-    return NextResponse.json({ message: "Unable to create account" }, { status: 500 })
+  } catch (error) {
+    console.error("Signup failed", error)
+
+    const message = error instanceof Error ? error.message : "Unable to create account"
+
+    return NextResponse.json(
+      {
+        message:
+          process.env.NODE_ENV === "development"
+            ? message
+            : "Unable to create account",
+      },
+      { status: 500 }
+    )
   }
 }

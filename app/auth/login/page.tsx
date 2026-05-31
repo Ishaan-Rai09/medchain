@@ -19,7 +19,7 @@ function LoginPageContent() {
   const [password, setPassword] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/"
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard"
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

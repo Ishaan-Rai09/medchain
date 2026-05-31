@@ -18,7 +18,7 @@ import {
 import Link from "next/link"
 import { ArrowRight, Building2 } from "lucide-react"
 
-type SignupRole = "GOVERNMENT" | "MANUFACTURER" | "PHARMACY" | "CONSUMER"
+type SignupRole = "GOVERNMENT" | "MANUFACTURER" | "PHARMACY"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -76,7 +76,7 @@ export default function SignupPage() {
       email,
       password,
       redirect: false,
-      callbackUrl: "/",
+      callbackUrl: "/dashboard",
     })
 
     setIsSubmitting(false)
@@ -88,7 +88,7 @@ export default function SignupPage() {
     }
 
     toast.success("Account created and signed in")
-    router.push(signInResult.url ?? "/")
+    router.push(signInResult.url ?? "/dashboard")
     router.refresh()
   }
 
@@ -178,7 +178,6 @@ export default function SignupPage() {
                         <SelectItem value="GOVERNMENT">Government</SelectItem>
                         <SelectItem value="MANUFACTURER">Manufacturer</SelectItem>
                         <SelectItem value="PHARMACY">Pharmacy</SelectItem>
-                        <SelectItem value="CONSUMER">Consumer</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
