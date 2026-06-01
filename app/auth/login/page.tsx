@@ -32,6 +32,10 @@ function LoginPageContent() {
       callbackUrl,
     })
 
+    // DEBUG: log the signIn result to help diagnose failures
+    // eslint-disable-next-line no-console
+    console.log('[client] signIn result:', result)
+
     setIsSubmitting(false)
 
     if (!result || result.error) {
@@ -45,13 +49,27 @@ function LoginPageContent() {
     // return a user before navigating. This avoids a race where the app
     // redirects to /dashboard but the server still sees no session and
     // sends the user back to the login page.
-    const waitForSession = async (attempts = 10, delay = 250) => {
+    const waitForSession = async (attempts = 20, delay = 300) => {
       for (let i = 0; i < attempts; i++) {
         try {
           const resp = await fetch('/api/auth/session')
+          // DEBUG: log the session endpoint status for each poll
+          // eslint-disable-next-line no-console
+          console.log('[client] /api/auth/session poll', i, resp.status)
           if (resp.ok) {
             const json = await resp.json()
+            // eslint-disable-next-line no-console
+            console.log('[client] /api/auth/session json', json)
             if (json?.user) return true
+          } else {
+            // If server returned an error, log text for debugging
+            try {
+              const text = await resp.text()
+              // eslint-disable-next-line no-console
+              console.warn('[client] /api/auth/session error body:', text)
+            } catch (e) {
+              // ignore
+            }
           }
         } catch (e) {
           // ignore and retry
@@ -64,14 +82,17 @@ function LoginPageContent() {
 
     const ready = await waitForSession(12, 250)
     if (!ready) {
-      // fallback: navigate to callback and refresh
-      router.push(result.url ?? callbackUrl)
-      router.refresh()
+      // fallback: navigate to callback and refresh — also surface more info
+      // eslint-disable-next-line no-console
+      console.warn('[client] session not ready after polling, navigating anyway', result)
+      // Use full navigation to avoid client-side routing race that may
+      // cause the server to see no session and redirect back to login.
+      window.location.assign(result?.url ?? callbackUrl)
       return
     }
 
-    router.push(result.url ?? callbackUrl)
-    router.refresh()
+    // Use full navigation to ensure cookies and server session view are in sync.
+    window.location.assign(result?.url ?? callbackUrl)
   }
 
   return (
@@ -122,6 +143,7 @@ function LoginPageContent() {
                       id="email"
                       type="email"
                       placeholder="you@agency.gov"
+                      autoComplete="username"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       required
@@ -133,6 +155,7 @@ function LoginPageContent() {
                       id="password"
                       type="password"
                       placeholder="••••••••"
+                      autoComplete="current-password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       required

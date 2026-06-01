@@ -17,6 +17,9 @@ export default function Header() {
   const [open, setOpen] = useState(false)
 
   const session = sess?.data ?? null
+  // DEBUG: client-side session state
+  // eslint-disable-next-line no-console
+  console.log('[client] header useSession()', sess)
   const role = session?.user?.role
   const email = session?.user?.email
   const expires = session?.expires

@@ -213,6 +213,9 @@ export default async function RoleDashboardPage({
 }) {
   const { role: roleSegment } = await params
   const session = await getServerSession(authOptions)
+  // DEBUG: log session for troubleshooting login redirects
+  // eslint-disable-next-line no-console
+  console.log('[debug] /dashboard/[role] session:', JSON.stringify(session))
 
   if (!session?.user) {
     redirect("/auth/login")

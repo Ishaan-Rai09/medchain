@@ -1,10 +1,12 @@
-import { getUsersCollection } from "@/lib/mongo"
+import { getUsersCollection, getMongoClientPromise } from "@/lib/mongo"
 import type { AuthRole } from "@/lib/mongo"
 import { compare } from "bcryptjs"
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter"
 
 export const authOptions: NextAuthOptions = {
+  adapter: MongoDBAdapter(getMongoClientPromise()),
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -54,9 +56,9 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role
       }
 
-      // Ensure token contains an expiry for server-side checks (rotate on sign-in)
+      // Ensure token contains an expiry for client-side checks
       const now = Math.floor(Date.now() / 1000)
-      const maxAge = 60 * 60 // 1 hour
+      const maxAge = 30 * 24 * 60 * 60 // match session maxAge (30 days)
       if (!token.exp || (user && token.iat && now - (token.iat as number) > maxAge)) {
         token.iat = now
         token.exp = now + maxAge
@@ -69,7 +71,6 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as AuthRole
       }
 
-      // Attach expiry to session object for client-side UI
       if (token.exp) {
         session.expires = new Date((token.exp as number) * 1000).toISOString()
       }
@@ -79,8 +80,9 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60, // 1 hour
-    updateAge: 15 * 60, // 15 minutes
+    // keep users signed in for 30 days by default
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
     signIn: "/auth/login",

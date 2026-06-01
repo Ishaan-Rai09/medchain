@@ -112,7 +112,7 @@ function validateConnectionString(uri: string): void {
   }
 }
 
-function getMongoClientPromise(): Promise<MongoClient> {
+export function getMongoClientPromise(): Promise<MongoClient> {
   if (!globalForMongo.mongoClientPromise) {
     validateConnectionString(connectionString)
     globalForMongo.mongoClientPromise = new MongoClient(connectionString).connect()
